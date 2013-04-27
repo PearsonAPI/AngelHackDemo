@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<!--
+  Copyright 2010 Google Inc.
+ 
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+ 
+     http://www.apache.org/licenses/LICENSE-2.0
+ 
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+ 
+  Original slides: Marcin Wichary (mwichary@google.com)
+  Modifications: Ernest Delgado (ernestd@google.com)
+                 Alex Russell (slightlyoff@chromium.org)
+                 Brad Neuberg
+
+  *** Re-purposed and heavily modified by Peter O'Shaughnessy ***
+--> 
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge;chrome=1">
+    <title>Pearson Dictionary API for MyLabs</title>
+    <link href="css/screen.css" rel="stylesheet" type="text/css"/>
+    <link href="css/dictionary.css" rel="stylesheet" type="text/css"/>
+    <link href="css/font-awesome.css" rel="stylesheet" type="text/css"/>
+    <script src="js/jquery.js" type="text/javascript"></script>
+    <script src="js/slideControls.js" type="text/javascript"></script>
+    <script src="js/dictionaryExample.js" type="text/javascript"></script>
+    <script src="js/handlebars.js" type="text/javascript"></script>
+
+    <!-- Handlebars template to output list of entries -->
+    <script id="entries-template" type="text/x-handlebars-template">
+      <div class="entries">
+        <ol class="entry">
+          {{#each results}}
+              {{>entry}}
+          {{/each}}
+        </ol>
+      </div>
+    </script>
+
+    <script id="assets-partial" type="text/x-handlbars-template">
+
+      <ul class="assets">
+      {{#each audio}}
+          <li class="icon-volume-up">sfx
+            <audio >
+              <source src="{{url}}?apikey={{my_apikey}}" type="audio/mp3">
+              </source>
+            </audio>
+          </li>
+        {{/if}}
+      {{/each}}
+      </ul>
+    </script>
+
+    <script id="examples" type "text/x-handlebars-template">
+     {{#if examples}}
+       <ol class="example">
+       {{#each examples}}
+       <li class="example">&ldquo;{{#if text}}{{{text}}}{{else}}{{{this}}}{{/if}}&rdquo;
+         {{#if audio}}
+            <span class="icon-volume-up">
+            <audio preload>
+              <source src="{{audio.0.url}}?apikey={{my_apikey}}" type="{{mime_type}}">
+              </source>
+            </audio>
+          </span>
+          {{/if}}
+          </li>
+        {{/each}}
+        </ol>
+      {{/if}}
+    </script>
+
+    <script id="collocations" type "text/x-handlebars-template">
+      {{#if examples}}
+        <ol class="example">
+        {{#each collocations}}
+          <li class="example"> &ldquo;{{{text}}}&rdquo; {{#if glossary}}({{glossary}}){{/if}} </li>
+        {{/each}}
+        </ol>
+      {{/if}}
+    </script>
+
+    <script id="frequency" type "text/x-handlebars-template">
+      {{#if frequency}}
+      <ol class="frequency">
+        {{#if frequency.written}}<li class="frequency">Written: <meter value="{{freq frequency.written}}" max="3"></meter></li>{{/if}}
+        {{#if frequency.spoken}}<li class="frequency">Spoken:  <meter value="{{freq frequency.spoken}}" max="3"></meter></li>{{/if}}
+      </ol>
+      {{/if}}
+    </script>
+
+    <script id="entry-partial" type="text/x-handlebars-template">
+      <li id="{{{id}}}" class"entry">
+        <span class="entry">{{{headword}}}{{#if part_of_speech}} (<i>{{part_of_speech}}</i>){{/if}} {{homnum}}</span>
+        <span class="clickMsg">(click to expand)</span>
+        {{#each images}}
+          <img src="{{url}}?apikey={{my_apikey}}" class="asset"></img>
+        {{/each}}
+        {{#if pronunciations}}
+          <ul class="assets">
+            {{#each pronunciations}}
+              <li class="icon-volume-up">{{#if ipa}} {{ipa}} {{/if}} {{lang}}
+                <audio >
+                  <source src="{{audio.0.url}}?apikey={{my_apikey}}" type="audio/mp3">
+                  </source>
+                </audio>
+              </li>
+            {{/each}}
+          </ul>
+        {{/if}}
+        {{#if sound_effects}}
+          <ul class="assets">
+           {{#each sound_effects}}
+              <li class="icon-volume-up"> sound effect
+                <audio >
+                  <source src="{{url}}?apikey={{my_apikey}}" type="audio/mp3">
+                  </source>
+                </audio>
+              </li>
+              {{/each}}
+          </ul>
+        {{/if}}
+        {{>frequency}}
+        {{>examples}}
+        <ol class="senses">
+        {{#each senses}}
+          {{#each subsenses}}
+            <li class"sense">
+            {{#if definition}}<p class="definition">{{{definition}}}</p>{{/if}}
+            {{#if lexical_unit}}<p class="definition">{{{lexical_unit}}}</p>{{/if}}
+            {{#if translation}}<p class="definition">{{{translation}}}</p>{{/if}}
+            {{>collocations}}
+            {{>examples}}
+            </li>
+          {{/each}}
+          <li class"sense">
+          {{#if definition}}<p class="definition">{{{definition}}}</p>{{/if}}
+          {{#if lexical_unit}}<p class="definition">{{{lexical_unit}}}</p>{{/if}}
+          {{#if translation}}<p class="definition">{{{translation}}}</p>{{/if}}
+          {{>collocations}}
+          {{>examples}}
+          </li>
+        {{/each}}
+        </ol>
+      </li>
+   </script>
+
+  </head>
+  <body>
+    <div class="presentation">
+      <div id="presentation-counter"></div>
+      <div class="slides">
+        <div class="slide landing">
+          <section class="centre">
+            <h1><span>Pearson APIs</span></h1>
+            <h2><span>&ldquo;Angelhack London&rdquo; demo</span></h2>
+            <p class="author"><span>Lawrie Nichols</span></p>
+            <p class="byline"><span>Embedding Longman Dictionaries</span></p>
+          </section>
+        </div>
+
+        <div class="slide dictionaryexample">
+          <header>See it working*</header>
+          <section class="centre">
+            <p class="footnote">*Dependent on Internet connection!</p>
+            <div class="contentAdder hidden">
+              <div class="addable current shown">
+                <form action="#" id="dictionaryExample">
+                  <div>
+                    <input type="text" id="dictionaryWord" value=""/>
+                    <input type="submit" id="dictionaryGo" value="Go!"/>
+                    <!--button id="dictionaryGoRandom">Go random!</button-->
+                    <div class="loading hidden"><span>.</span><span>.</span><span>.</span></div>
+                    <div>
+                      <div>
+                        <div id="dictionaryAnswers"></div>
+                      </div>
+                </form>
+              </div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </div>
+    <!-- This must be at the bottom of the page -->
+    <script src="js/main.js" type="text/javascript"></script>
+  </body>
+</html>
